@@ -20,7 +20,8 @@ TEST_CASE("LineView<std::string_view>") {
     const char *str = "1\n2\n3\n\n5";
     std::vector<std::string> expected{"1", "2", "3", "", "5"};
     std::vector<std::string> lines;
-    for (auto &&line : LineView(std::string_view(str))) {
+    auto sv = std::string_view(str);
+    for (auto &&line : LineView(sv)) {
         lines.emplace_back(line);
     }
     CHECK_EQ(expected, lines);
