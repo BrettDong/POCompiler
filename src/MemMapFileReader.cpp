@@ -1,4 +1,4 @@
-#include "MemMappedFile.hpp"
+#include "MemMapFileReader.hpp"
 
 #include <fmt/core.h>
 
@@ -6,7 +6,12 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 
-MemMappedFile::MemMappedFile(const char *path) : mFile(path) {
+MemMapFileReader::MemMapFileReader(const char *path) {
+    MemMapFileReader::open(path);
+}
+
+void MemMapFileReader::open(const char *path) {
+    mFile.open(path);
     struct stat mStat {};
     if (fstat(mFile.fd(), &mStat) < 0) {
         throw std::runtime_error(fmt::format("fstat(): {}", strerror(errno)));
@@ -19,8 +24,16 @@ MemMappedFile::MemMappedFile(const char *path) : mFile(path) {
     mBuf = static_cast<char *>(ptr);
 }
 
-MemMappedFile::~MemMappedFile() {
+void MemMapFileReader::close() {
     if (mBuf != nullptr) {
         munmap(static_cast<void *>(mBuf), mFileSize);
     }
+}
+
+MemMapFileReader::~MemMapFileReader() {
+    MemMapFileReader::close();
+}
+
+std::string_view MemMapFileReader::view() const {
+    return {mBuf, mFileSize};
 }

@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "LineView.hpp"
-#include "MemMappedFile.hpp"
+#include "MemMapFileReader.hpp"
 
 bool starts_with(const std::string_view str, const std::string_view prefix) {
     if (str.length() < prefix.length()) {
@@ -68,10 +68,9 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    MemMappedFile file(input_path.c_str());
+    MemMapFileReader file(input_path.c_str());
     int msgCount = 0;
-    std::vector<std::string> vec;
-    for (auto &&line : LineView(file)) {
+    for (auto &&line : LineView(file.view())) {
         if (starts_with(line, "msgid ")) {
             ++msgCount;
         }

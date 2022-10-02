@@ -6,15 +6,20 @@
 #include <string>
 #include <unistd.h>
 
-FileWrapper::FileWrapper(const char *path) {
-    mFD = open(path, O_RDONLY);
+void FileWrapper::open(const char *path) {
+    mFD = ::open(path, O_RDONLY);
     if (mFD == -1) {
         throw std::runtime_error(fmt::format("open(): {}", strerror(errno)));
     }
 }
 
-FileWrapper::~FileWrapper() {
-    if (mFD != mInvalidFD) {
-        close(mFD);
+void FileWrapper::close() {
+    if (isOpen()) {
+        ::close(mFD);
+        mFD = mInvalidFD;
     }
+}
+
+FileWrapper::~FileWrapper() {
+    close();
 }

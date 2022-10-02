@@ -4,10 +4,17 @@
 
 class FileWrapper {
   public:
-    explicit FileWrapper(const char *path);
+    FileWrapper() : mFD(mInvalidFD) {}
     ~FileWrapper();
 
-    auto fd() const noexcept -> int {
+    void open(const char *path);
+    void close();
+
+    bool isOpen() const noexcept {
+        return mFD != mInvalidFD;
+    }
+
+    int fd() const noexcept {
         return mFD;
     }
 

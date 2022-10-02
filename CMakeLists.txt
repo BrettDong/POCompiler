@@ -1,4 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
+if (${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.24")
+    cmake_policy(SET CMP0135 OLD)
+endif ()
 project(POCompiler)
 
 # Dependencies
@@ -8,13 +11,11 @@ include(FetchContent)
 
 FetchContent_Declare(
         doctest
-        GIT_REPOSITORY https://github.com/doctest/doctest.git
-        GIT_TAG v2.4.9
+        URL https://github.com/doctest/doctest/archive/refs/tags/v2.4.9.tar.gz
 )
 
 FetchContent_Declare(fmt
-        GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-        GIT_TAG 9.1.0
+        URL https://github.com/fmtlib/fmt/archive/refs/tags/9.1.0.tar.gz
         )
 
 FetchContent_MakeAvailable(doctest fmt)
@@ -25,8 +26,8 @@ set(SOURCE
         src/FileWrapper.cpp
         src/FileWrapper.hpp
         src/LineView.hpp
-        src/MemMappedFile.cpp
-        src/MemMappedFile.hpp
+        src/MemMapFileReader.cpp
+        src/MemMapFileReader.hpp
         )
 
 set(TEST_SOURCE
@@ -36,6 +37,10 @@ set(TEST_SOURCE
 add_library(Common INTERFACE)
 target_include_directories(Common INTERFACE src)
 target_link_libraries(Common INTERFACE fmt::fmt)
+if (SANITIZERS)
+    target_compile_options(Common INTERFACE -fsanitize=address,undefined)
+    target_link_options(Common INTERFACE -fsanitize=address,undefined)
+endif ()
 
 add_library(POCompilerCommon STATIC ${SOURCE})
 target_link_libraries(POCompilerCommon Common)

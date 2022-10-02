@@ -3,42 +3,8 @@
 #define LINE_VIEW_HPP
 
 #include <iterator>
-#include <type_traits>
+#include <string_view>
 
-template <typename T, typename = void>
-class LineViewSource {
-  private:
-    const T &mSource;
-
-  public:
-    explicit LineViewSource(const T &source) : mSource(source) {}
-
-    const T &get() const {
-        return mSource;
-    }
-
-    static constexpr bool storeByCopy = false;
-    static constexpr bool storeByRef = true;
-};
-
-template <typename T>
-class LineViewSource<T, std::enable_if_t<std::is_trivially_copy_constructible_v<T>>> {
-  private:
-    const T mSource;
-
-  public:
-    explicit LineViewSource(T source) : mSource(source) {}
-
-    const T &get() const {
-        return mSource;
-    }
-
-    static constexpr bool storeByCopy = true;
-    static constexpr bool storeByRef = false;
-};
-
-template <typename T,
-          std::enable_if_t<std::is_same_v<typename T::value_type, char>, void *> = nullptr>
 class LineView {
   public:
     using iterator_category = std::input_iterator_tag;
@@ -48,22 +14,22 @@ class LineView {
 
     class iterator {
       public:
-        explicit iterator(const T &source, typename T::const_iterator begin)
-            : mSource(source), pBegin(begin), pEnd(begin) {
-            if (begin != source.end()) {
+        explicit iterator(std::string_view sv, std::string_view::const_iterator begin)
+            : mSV(sv), pBegin(begin), pEnd(begin) {
+            if (begin != mSV.end()) {
                 locateEOL();
             } else {
                 mEnded = true;
             }
         }
 
-        value_type operator*() {
-            return std::string_view(&*pBegin, &*pEnd - &*pBegin);
+        std::string_view operator*() {
+            return {&*pBegin, static_cast<std::size_t>(&*pEnd - &*pBegin)};
         }
 
         iterator &operator++() noexcept {
             pBegin = pEnd;
-            if (pEnd != mSource.get().end()) {
+            if (pEnd != mSV.end()) {
                 ++pBegin;
                 locateEOL();
             } else {
@@ -83,30 +49,30 @@ class LineView {
       private:
         void locateEOL() {
             pEnd = pBegin;
-            while (pEnd != mSource.get().end() && *pEnd != '\n') {
+            while (pEnd != mSV.end() && *pEnd != '\n') {
                 ++pEnd;
             }
         }
 
-        typename T::const_iterator pBegin;
-        typename T::const_iterator pEnd;
-        LineViewSource<T> mSource;
+        std::string_view::const_iterator pBegin;
+        std::string_view::const_iterator pEnd;
+        std::string_view mSV;
         bool mEnded = false;
     };
 
-    explicit LineView(const T &source) : mSource(source) {}
+    explicit LineView(std::string_view sv) : mSV(sv) {}
 
     iterator begin() const {
-        return iterator(mSource.get(), mSource.get().begin());
+        return iterator(mSV, mSV.begin());
     }
 
-    sentinel_iterator end() const {
-        const static sentinel_iterator sentinel;
+    static sentinel_iterator end() {
+        const static sentinel_iterator sentinel{};
         return sentinel;
     }
 
   private:
-    LineViewSource<T> mSource;
+    std::string_view mSV;
 };
 
 #endif
