@@ -1,0 +1,31 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/test.yml'
+      - 'CMakeLists.txt'
+      - 'src/**'
+      - 'tests/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install ninja-build
+      - name: Configure
+        run: |
+          cmake -S . -B build -D CMAKE_BUILD_TYPE=Release -G Ninja
+      - name: Build
+        run: |
+          cmake --build build
+      - name: Run tests
+        run: |
+          cd build && ctest
