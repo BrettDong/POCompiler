@@ -20,8 +20,7 @@ TEST_CASE("LineView<std::string_view>") {
     const char *str = "1\n2\n3\n\n5";
     std::vector<std::string> expected{"1", "2", "3", "", "5"};
     std::vector<std::string> lines;
-    auto sv = std::string_view(str);
-    for (auto &&line : LineView(sv)) {
+    for (auto &&line : LineView(std::string_view(str))) {
         lines.emplace_back(line);
     }
     CHECK_EQ(expected, lines);
@@ -35,4 +34,19 @@ TEST_CASE("LineView<std::vector<char>>") {
         lines.emplace_back(line);
     }
     CHECK_EQ(expected, lines);
+}
+
+TEST_CASE("LineViewSource<std::string>") {
+    CHECK_EQ(LineViewSource<std::string>::storeByCopy, false);
+    CHECK_EQ(LineViewSource<std::string>::storeByRef, true);
+}
+
+TEST_CASE("LineViewSource<std::string_view>") {
+    CHECK_EQ(LineViewSource<std::string_view>::storeByCopy, true);
+    CHECK_EQ(LineViewSource<std::string_view>::storeByRef, false);
+}
+
+TEST_CASE("LineViewSource<std::vector<char>>") {
+    CHECK_EQ(LineViewSource<std::vector<char>>::storeByCopy, false);
+    CHECK_EQ(LineViewSource<std::vector<char>>::storeByRef, true);
 }

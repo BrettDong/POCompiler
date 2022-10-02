@@ -5,6 +5,38 @@
 #include <iterator>
 #include <type_traits>
 
+template <typename T, typename = void>
+class LineViewSource {
+  private:
+    const T &mSource;
+
+  public:
+    explicit LineViewSource(const T &source) : mSource(source) {}
+
+    const T &get() const {
+        return mSource;
+    }
+
+    static constexpr bool storeByCopy = false;
+    static constexpr bool storeByRef = true;
+};
+
+template <typename T>
+class LineViewSource<T, std::enable_if_t<std::is_trivially_copy_constructible_v<T>>> {
+  private:
+    const T mSource;
+
+  public:
+    explicit LineViewSource(T source) : mSource(source) {}
+
+    const T &get() const {
+        return mSource;
+    }
+
+    static constexpr bool storeByCopy = true;
+    static constexpr bool storeByRef = false;
+};
+
 template <typename T,
           std::enable_if_t<std::is_same_v<typename T::value_type, char>, void *> = nullptr>
 class LineView {
@@ -31,7 +63,7 @@ class LineView {
 
         iterator &operator++() noexcept {
             pBegin = pEnd;
-            if (pEnd != mSource.end()) {
+            if (pEnd != mSource.get().end()) {
                 ++pBegin;
                 locateEOL();
             } else {
@@ -51,21 +83,21 @@ class LineView {
       private:
         void locateEOL() {
             pEnd = pBegin;
-            while (pEnd != mSource.end() && *pEnd != '\n') {
+            while (pEnd != mSource.get().end() && *pEnd != '\n') {
                 ++pEnd;
             }
         }
 
         typename T::const_iterator pBegin;
         typename T::const_iterator pEnd;
-        const T &mSource;
+        LineViewSource<T> mSource;
         bool mEnded = false;
     };
 
     explicit LineView(const T &source) : mSource(source) {}
 
     iterator begin() const {
-        return iterator(mSource, mSource.begin());
+        return iterator(mSource.get(), mSource.get().begin());
     }
 
     sentinel_iterator end() const {
@@ -74,7 +106,7 @@ class LineView {
     }
 
   private:
-    const T &mSource;
+    LineViewSource<T> mSource;
 };
 
 #endif
