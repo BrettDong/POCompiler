@@ -2,6 +2,7 @@
 #ifndef LINE_VIEW_HPP
 #define LINE_VIEW_HPP
 
+#include <cstring>
 #include <iterator>
 #include <string_view>
 
@@ -14,50 +15,47 @@ class LineView {
 
     class iterator {
       public:
-        explicit iterator(std::string_view sv, std::string_view::const_iterator begin)
+        explicit iterator(std::string_view sv, const char *begin)
             : mSV(sv), pBegin(begin), pEnd(begin) {
             if (begin != mSV.end()) {
                 locateEOL();
             } else {
-                mEnded = true;
+                pBegin = pEnd = nullptr;
             }
         }
 
         std::string_view operator*() {
-            return {&*pBegin, static_cast<std::size_t>(&*pEnd - &*pBegin)};
+            return {pBegin, static_cast<std::size_t>(pEnd - pBegin)};
         }
 
         iterator &operator++() noexcept {
-            pBegin = pEnd;
             if (pEnd != mSV.end()) {
-                ++pBegin;
+                pBegin = pEnd + 1;
                 locateEOL();
             } else {
-                mEnded = true;
+                pBegin = pEnd = nullptr;
             }
             return *this;
         }
 
         friend bool operator==(const iterator &lhs, const sentinel_iterator &sentinel) noexcept {
-            return lhs.mEnded;
+            return lhs.pEnd == nullptr;
         }
 
         friend bool operator!=(const iterator &lhs, const sentinel_iterator &sentinel) noexcept {
-            return !lhs.mEnded;
+            return lhs.pEnd != nullptr;
         }
 
       private:
         void locateEOL() {
-            pEnd = pBegin;
-            while (pEnd != mSV.end() && *pEnd != '\n') {
-                ++pEnd;
-            }
+            const char *p =
+                static_cast<const char *>(std::memchr(pBegin, '\n', mSV.end() - pBegin));
+            pEnd = (p == nullptr) ? mSV.end() : p;
         }
 
-        std::string_view::const_iterator pBegin;
-        std::string_view::const_iterator pEnd;
+        const char *pBegin;
+        const char *pEnd;
         std::string_view mSV;
-        bool mEnded = false;
     };
 
     explicit LineView(std::string_view sv) : mSV(sv) {}
