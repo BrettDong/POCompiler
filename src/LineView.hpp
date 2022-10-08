@@ -4,6 +4,8 @@
 
 #include <cstring>
 #include <iterator>
+#include <optional>
+#include <string>
 #include <string_view>
 
 class LineView {
@@ -60,6 +62,11 @@ class LineView {
 
     explicit LineView(std::string_view sv) : mSV(sv) {}
 
+    explicit LineView(std::string &&str) {
+        mStr.emplace(std::move(str));
+        mSV = *mStr;
+    }
+
     iterator begin() const {
         return iterator(mSV, mSV.begin());
     }
@@ -71,6 +78,7 @@ class LineView {
 
   private:
     std::string_view mSV;
+    std::optional<std::string> mStr;
 };
 
 #endif
