@@ -40,24 +40,23 @@ class LineView {
             return *this;
         }
 
-        friend bool operator==(const iterator &lhs, const sentinel_iterator &sentinel) noexcept {
+        friend bool operator==(const iterator &lhs, const sentinel_iterator &) noexcept {
             return lhs.pEnd == nullptr;
         }
 
-        friend bool operator!=(const iterator &lhs, const sentinel_iterator &sentinel) noexcept {
+        friend bool operator!=(const iterator &lhs, const sentinel_iterator &) noexcept {
             return lhs.pEnd != nullptr;
         }
 
       private:
         void locateEOL() {
-            const char *p =
-                static_cast<const char *>(std::memchr(pBegin, '\n', mSV.end() - pBegin));
+            auto p = static_cast<const char *>(std::memchr(pBegin, '\n', mSV.end() - pBegin));
             pEnd = (p == nullptr) ? mSV.end() : p;
         }
 
+        std::string_view mSV;
         const char *pBegin;
         const char *pEnd;
-        std::string_view mSV;
     };
 
     explicit LineView(std::string_view sv) : mSV(sv) {}
