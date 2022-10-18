@@ -8,6 +8,8 @@
 #include <cstddef>
 #include <iterator>
 
+#if !defined(_WIN32)
+
 class MemMapFileReader : public FileReader {
   public:
     MemMapFileReader() : mFileSize(0), mBuf(nullptr) {}
@@ -23,5 +25,7 @@ class MemMapFileReader : public FileReader {
     char *mBuf = nullptr;
     FileWrapper mFile;
 };
+
+#endif
 
 #endif

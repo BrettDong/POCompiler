@@ -4,6 +4,7 @@
 #include <iostream>
 #include <map>
 
+#include "GenericFileReader.hpp"
 #include "LineView.hpp"
 #include "MemMapFileReader.hpp"
 #include "Parser.hpp"
@@ -59,7 +60,12 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    std::unique_ptr<FileReader> input_file = std::make_unique<MemMapFileReader>(input_path.c_str());
+    std::unique_ptr<FileReader> input_file;
+#if defined(_WIN32)
+    input_file = std::make_unique<GenericFileReader>(input_path.c_str());
+#else
+    input_file = std::make_unique<MemMapFileReader>(input_path.c_str());
+#endif
     auto entries = Parser{}.parsePOFile(*input_file);
     writeMO(entries, output_path.c_str());
     return 0;

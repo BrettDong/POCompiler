@@ -17,12 +17,19 @@ class LineView {
 
     class iterator {
       public:
-        explicit iterator(std::string_view sv, const char *begin)
-            : mSV(sv), pBegin(begin), pEnd(begin) {
-            if (begin != mSV.end()) {
-                locateEOL();
+        iterator() : pBegin(nullptr), pEnd(nullptr), pSentinel(nullptr) {}
+
+        explicit iterator(std::string_view sv, const char *begin) {
+            if (sv.empty()) {
+                pBegin = pEnd = pSentinel = nullptr;
             } else {
-                pBegin = pEnd = nullptr;
+                pBegin = begin;
+                pSentinel = sv.data() + sv.length();
+                if (pBegin != pSentinel) {
+                    locateEOL();
+                } else {
+                    pEnd = pSentinel;
+                }
             }
         }
 
@@ -31,30 +38,30 @@ class LineView {
         }
 
         iterator &operator++() noexcept {
-            if (pEnd != mSV.end()) {
+            if (pEnd != pSentinel) {
                 pBegin = pEnd + 1;
                 locateEOL();
             } else {
-                pBegin = pEnd = nullptr;
+                pBegin = pEnd = pSentinel;
             }
             return *this;
         }
 
         friend bool operator==(const iterator &lhs, const sentinel_iterator &) noexcept {
-            return lhs.pEnd == nullptr;
+            return lhs.pBegin == lhs.pSentinel;
         }
 
         friend bool operator!=(const iterator &lhs, const sentinel_iterator &) noexcept {
-            return lhs.pEnd != nullptr;
+            return lhs.pBegin != lhs.pSentinel;
         }
 
       private:
         void locateEOL() {
-            auto p = static_cast<const char *>(std::memchr(pBegin, '\n', mSV.end() - pBegin));
-            pEnd = (p == nullptr) ? mSV.end() : p;
+            auto p = static_cast<const char *>(std::memchr(pBegin, '\n', pSentinel - pBegin));
+            pEnd = (p == nullptr) ? pSentinel : p;
         }
 
-        std::string_view mSV;
+        const char *pSentinel;
         const char *pBegin;
         const char *pEnd;
     };
@@ -67,7 +74,11 @@ class LineView {
     }
 
     iterator begin() const {
-        return iterator(mSV, mSV.begin());
+        if (mSV.empty()) {
+            return {};
+        } else {
+            return iterator(mSV, mSV.data());
+        }
     }
 
     static sentinel_iterator end() {

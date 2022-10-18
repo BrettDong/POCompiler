@@ -12,17 +12,17 @@ include(FetchContent)
 Set(FETCHCONTENT_QUIET FALSE)
 
 FetchContent_Declare(doctest
-    URL https://github.com/doctest/doctest/archive/refs/tags/v2.4.9.tar.gz
-)
+        URL https://github.com/doctest/doctest/archive/refs/tags/v2.4.9.tar.gz
+        )
 
 FetchContent_Declare(fmt
-    URL https://github.com/fmtlib/fmt/archive/refs/tags/9.1.0.tar.gz
-)
+        URL https://github.com/fmtlib/fmt/archive/refs/tags/9.1.0.tar.gz
+        )
 
 if (BENCHMARK)
     FetchContent_Declare(googlebenchmark
-        URL https://github.com/google/benchmark/archive/refs/tags/v1.7.0.tar.gz
-    )
+            URL https://github.com/google/benchmark/archive/refs/tags/v1.7.0.tar.gz
+            )
     set(BENCHMARK_ENABLE_TESTING OFF)
 endif ()
 
@@ -37,6 +37,7 @@ endif ()
 set(SOURCE
         src/FileWrapper.cpp
         src/FileWrapper.hpp
+        src/GenericFileReader.cpp
         src/LineView.hpp
         src/MemMapFileReader.cpp
         src/MemMapFileReader.hpp
@@ -60,12 +61,14 @@ if (SANITIZERS)
     target_compile_options(Common INTERFACE -fsanitize=address,undefined)
     target_link_options(Common INTERFACE -fsanitize=address,undefined)
 endif ()
-include(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-march=native" COMPILER_SUPPORTS_MARCH_NATIVE)
-if (COMPILER_SUPPORTS_MARCH_NATIVE)
-    target_compile_options(Common INTERFACE -march=native)
+if (NOT MSVC)
+    include(CheckCXXCompilerFlag)
+    CHECK_CXX_COMPILER_FLAG("-march=native" COMPILER_SUPPORTS_MARCH_NATIVE)
+    if (COMPILER_SUPPORTS_MARCH_NATIVE)
+        target_compile_options(Common INTERFACE -march=native)
+    endif ()
+    target_compile_options(Common INTERFACE -Wall -Wextra -Wpedantic -fno-omit-frame-pointer)
 endif ()
-target_compile_options(Common INTERFACE -Wall -Wextra -Wpedantic -fno-omit-frame-pointer)
 
 add_library(POCompilerCommon STATIC ${SOURCE})
 target_link_libraries(POCompilerCommon Common)

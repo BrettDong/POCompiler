@@ -3,6 +3,9 @@
 #include <fmt/core.h>
 
 #include <string>
+
+#if !defined(_WIN32)
+
 #include <sys/mman.h>
 #include <sys/stat.h>
 
@@ -37,3 +40,5 @@ MemMapFileReader::~MemMapFileReader() {
 std::string_view MemMapFileReader::view() const {
     return {mBuf, mFileSize};
 }
+
+#endif

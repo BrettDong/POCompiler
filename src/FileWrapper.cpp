@@ -2,6 +2,8 @@
 
 #include <fmt/format.h>
 
+#if !defined(_WIN32)
+
 #include <fcntl.h>
 #include <string>
 #include <unistd.h>
@@ -23,3 +25,5 @@ void FileWrapper::close() {
 FileWrapper::~FileWrapper() {
     close();
 }
+
+#endif
