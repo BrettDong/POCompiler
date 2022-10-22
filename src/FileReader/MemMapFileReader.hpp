@@ -6,13 +6,10 @@
 #include "FileWrapper.hpp"
 
 #include <cstddef>
-#include <iterator>
-
-#if !defined(_WIN32)
 
 class MemMapFileReader : public FileReader {
   public:
-    MemMapFileReader() : mFileSize(0), mBuf(nullptr) {}
+    MemMapFileReader() = default;
     explicit MemMapFileReader(const char *path);
     ~MemMapFileReader();
 
@@ -21,11 +18,12 @@ class MemMapFileReader : public FileReader {
     void close() override;
 
   private:
-    std::size_t mFileSize;
+    std::size_t mFileSize = 0;
     char *mBuf = nullptr;
     FileWrapper mFile;
-};
-
+#if defined(_WIN32)
+    HANDLE mMapping = INVALID_HANDLE_VALUE;
 #endif
+};
 
 #endif

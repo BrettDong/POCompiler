@@ -35,12 +35,13 @@ endif ()
 # Project configuration
 
 set(SOURCE
-        src/FileWrapper.cpp
-        src/FileWrapper.hpp
-        src/GenericFileReader.cpp
+        src/ErrorUtil.cpp
+        src/FileReader/FileWrapper.cpp
+        src/FileReader/FileWrapper.hpp
+        src/FileReader/GenericFileReader.cpp
+        src/FileReader/MemMapFileReader.cpp
+        src/FileReader/MemMapFileReader.hpp
         src/LineView.hpp
-        src/MemMapFileReader.cpp
-        src/MemMapFileReader.hpp
         src/Parser.cpp
         src/Parser.hpp
         src/StringUtil.cpp
@@ -61,7 +62,9 @@ if (SANITIZERS)
     target_compile_options(Common INTERFACE -fsanitize=address,undefined)
     target_link_options(Common INTERFACE -fsanitize=address,undefined)
 endif ()
-if (NOT MSVC)
+if (MSVC)
+    target_compile_options(Common INTERFACE /W4)
+else ()
     include(CheckCXXCompilerFlag)
     CHECK_CXX_COMPILER_FLAG("-march=native" COMPILER_SUPPORTS_MARCH_NATIVE)
     if (COMPILER_SUPPORTS_MARCH_NATIVE)

@@ -11,7 +11,7 @@ void writeMO(const std::map<std::string, std::string> &entries, const char *path
     std::ofstream fout(path, std::ios::out | std::ios::binary);
     writeInteger(fout, 0x950412deU);
     writeInteger(fout, 0x00000000U);
-    std::uint32_t numEntries = entries.size();
+    auto numEntries = static_cast<std::uint32_t>(entries.size());
     writeInteger(fout, numEntries);
     std::uint32_t OTableOffset = 28U;
     std::uint32_t TTableOffset = OTableOffset + 8 * numEntries;
@@ -23,14 +23,14 @@ void writeMO(const std::map<std::string, std::string> &entries, const char *path
     constexpr std::uint32_t alignment = 4U;
     const char nil = '\0';
     for (const auto &[O, T] : entries) {
-        std::uint32_t OLength = O.length();
+        auto OLength = static_cast<std::uint32_t>(O.length());
         writeInteger(fout, OLength);
         writeInteger(fout, offset);
         offset += OLength + 1;
         offset += (alignment - (OLength + 1) % alignment) % alignment;
     }
     for (const auto &[O, T] : entries) {
-        std::uint32_t TLength = T.length();
+        auto TLength = static_cast<std::uint32_t>(T.length());
         writeInteger(fout, TLength);
         writeInteger(fout, offset);
         offset += TLength + 1;

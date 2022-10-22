@@ -34,6 +34,9 @@ class LineView {
         }
 
         std::string_view operator*() {
+            if (pBegin < pEnd && *(pEnd - 1) == '\r') {
+                return {pBegin, static_cast<std::size_t>(pEnd - 1 - pBegin)};
+            }
             return {pBegin, static_cast<std::size_t>(pEnd - pBegin)};
         }
 
@@ -42,17 +45,17 @@ class LineView {
                 pBegin = pEnd + 1;
                 locateEOL();
             } else {
-                pBegin = pEnd = pSentinel;
+                pBegin = pEnd = nullptr;
             }
             return *this;
         }
 
         friend bool operator==(const iterator &lhs, const sentinel_iterator &) noexcept {
-            return lhs.pBegin == lhs.pSentinel;
+            return lhs.pEnd == nullptr;
         }
 
         friend bool operator!=(const iterator &lhs, const sentinel_iterator &) noexcept {
-            return lhs.pBegin != lhs.pSentinel;
+            return lhs.pEnd != nullptr;
         }
 
       private:
@@ -61,9 +64,9 @@ class LineView {
             pEnd = (p == nullptr) ? pSentinel : p;
         }
 
-        const char *pSentinel;
         const char *pBegin;
         const char *pEnd;
+        const char *pSentinel;
     };
 
     explicit LineView(std::string_view sv) : mSV(sv) {}

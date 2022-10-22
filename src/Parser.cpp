@@ -1,5 +1,5 @@
 #include "Parser.hpp"
-#include "FileReader.hpp"
+#include "FileReader/FileReader.hpp"
 #include "LineView.hpp"
 #include "StringUtil.hpp"
 

@@ -1,17 +1,13 @@
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <ios>
 #include <iostream>
-#include <map>
 
-#include "GenericFileReader.hpp"
-#include "LineView.hpp"
-#include "MemMapFileReader.hpp"
+#include "FileReader/MemMapFileReader.hpp"
 #include "Parser.hpp"
 #include "StringUtil.hpp"
 #include "Writer.hpp"
-
-#include <fmt/format.h>
 
 int main(int argc, char *argv[]) {
     std::string input_path;
@@ -60,12 +56,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    std::unique_ptr<FileReader> input_file;
-#if defined(_WIN32)
-    input_file = std::make_unique<GenericFileReader>(input_path.c_str());
-#else
-    input_file = std::make_unique<MemMapFileReader>(input_path.c_str());
-#endif
+    auto input_file = std::make_unique<MemMapFileReader>(input_path.c_str());
     auto entries = Parser{}.parsePOFile(*input_file);
     writeMO(entries, output_path.c_str());
     return 0;

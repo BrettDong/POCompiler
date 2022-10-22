@@ -1,7 +1,7 @@
 #include <benchmark/benchmark.h>
 
+#include "FileReader/MemMapFileReader.hpp"
 #include "LineView.hpp"
-#include "MemMapFileReader.hpp"
 #include "Parser.hpp"
 #include "Writer.hpp"
 
