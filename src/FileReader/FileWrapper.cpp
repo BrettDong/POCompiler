@@ -2,7 +2,6 @@
 #include "ErrorUtil.hpp"
 
 #include <fmt/format.h>
-#include <string>
 
 #if !defined(_WIN32)
 #include <fcntl.h>
@@ -29,7 +28,7 @@ void FileWrapper::close() {
 void FileWrapper::open(const char *path) {
     mFD = ::open(path, O_RDONLY);
     if (mFD == -1) {
-        throw std::runtime_error(fmt::format("open(): {}", strerror(errno)));
+        throw std::runtime_error(fmt::format("open(): {}", getSystemError()));
     }
 }
 

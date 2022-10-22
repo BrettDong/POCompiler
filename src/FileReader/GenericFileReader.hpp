@@ -12,7 +12,7 @@ class GenericFileReader : public FileReader {
     explicit GenericFileReader(const char *path);
     void open(const char *path) override;
     std::string_view view() const override;
-    void close() override {}
+    void close() override;
 
   protected:
     std::string mBuffer;

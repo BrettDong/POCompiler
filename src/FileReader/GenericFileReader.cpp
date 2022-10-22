@@ -11,6 +11,10 @@ void GenericFileReader::open(const char *path) {
     mBuffer = std::string((std::istreambuf_iterator<char>(fin)), std::istreambuf_iterator<char>());
 }
 
+void GenericFileReader::close() {
+    mBuffer.clear();
+}
+
 std::string_view GenericFileReader::view() const {
     return mBuffer;
 }

@@ -49,6 +49,8 @@ void MemMapFileReader::close() {
         auto addr = static_cast<LPVOID>(mBuf);
         UnmapViewOfFile(addr);
         CloseHandle(mMapping);
+        mMapping = INVALID_HANDLE_VALUE;
+        mBuf = nullptr;
     }
 }
 #else
@@ -69,6 +71,7 @@ void MemMapFileReader::open(const char *path) {
 void MemMapFileReader::close() {
     if (mBuf != nullptr) {
         munmap(static_cast<void *>(mBuf), mFileSize);
+        mBuf = nullptr;
     }
 }
 #endif
