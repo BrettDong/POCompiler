@@ -1,97 +1,73 @@
 #pragma once
-#ifndef LINE_VIEW_HPP
-#define LINE_VIEW_HPP
-
 #include <cstring>
-#include <iterator>
-#include <optional>
-#include <string>
 #include <string_view>
 
 class LineView {
   public:
-    using iterator_category = std::input_iterator_tag;
-    using value_type = std::string_view;
+    explicit LineView(std::string_view data) : mData(data) {}
+    ~LineView() = default;
 
     class sentinel_iterator {};
 
     class iterator {
       public:
-        iterator() : pBegin(nullptr), pEnd(nullptr), pSentinel(nullptr) {}
-
-        explicit iterator(std::string_view sv, const char *begin) {
-            if (sv.empty()) {
-                pBegin = pEnd = pSentinel = nullptr;
+        explicit iterator(const LineView &lineView) {
+            if (lineView.mData.empty()) {
+                mEnded = true;
             } else {
-                pBegin = begin;
-                pSentinel = sv.data() + sv.length();
-                if (pBegin != pSentinel) {
-                    locateEOL();
-                } else {
-                    pEnd = pSentinel;
-                }
+                pBegin = lineView.mData.data();
+                pEnd = pBegin + lineView.mData.size();
+                mEnded = false;
+                findLineBreak();
             }
         }
 
-        std::string_view operator*() {
-            if (pBegin < pEnd && *(pEnd - 1) == '\r') {
-                return {pBegin, static_cast<std::size_t>(pEnd - 1 - pBegin)};
-            }
-            return {pBegin, static_cast<std::size_t>(pEnd - pBegin)};
+        std::string_view operator*() const noexcept {
+            return {pBegin, static_cast<std::size_t>(pLineBreak - pBegin)};
         }
 
         iterator &operator++() noexcept {
-            if (pEnd != pSentinel) {
-                pBegin = pEnd + 1;
-                locateEOL();
+            if (pLineBreak == pEnd) {
+                mEnded = true;
             } else {
-                pBegin = pEnd = nullptr;
+                pBegin = pLineBreak + 1;
+                findLineBreak();
             }
             return *this;
         }
 
-        friend bool operator==(const iterator &lhs, const sentinel_iterator &) noexcept {
-            return lhs.pEnd == nullptr;
+        friend bool operator==(const iterator &it, const sentinel_iterator &) noexcept {
+            return it.ended();
         }
 
-        friend bool operator!=(const iterator &lhs, const sentinel_iterator &) noexcept {
-            return lhs.pEnd != nullptr;
+        friend bool operator!=(const iterator &it, const sentinel_iterator &) noexcept {
+            return !it.ended();
         }
 
       private:
-        void locateEOL() {
-            auto p = static_cast<const char *>(std::memchr(pBegin, '\n', pSentinel - pBegin));
-            pEnd = (p == nullptr) ? pSentinel : p;
+        void findLineBreak() {
+            pLineBreak = static_cast<const char *>(std::memchr(pBegin, '\n', pEnd - pBegin));
+            if (pLineBreak == nullptr) {
+                pLineBreak = pEnd;
+            }
         }
 
-        const char *pBegin;
-        const char *pEnd;
-        const char *pSentinel;
+        bool ended() const noexcept {
+            return mEnded;
+        }
+
+        const char *pBegin, *pEnd, *pLineBreak;
+        bool mEnded;
     };
 
-    explicit LineView(std::string_view sv) : mSV(sv) {}
-
-    explicit LineView(std::string &&str) {
-        mStr.emplace(std::move(str));
-        mSV = *mStr;
-    }
-
     iterator begin() const {
-        if (mSV.empty()) {
-            return {};
-        } else {
-            return iterator(mSV, mSV.data());
-        }
+        return iterator(*this);
     }
 
-    static sentinel_iterator end() {
-        const static sentinel_iterator sentinel{};
-        return sentinel;
+    sentinel_iterator end() const noexcept {
+        return {};
     }
 
   private:
-    std::string_view mSV;
-    std::optional<std::string> mStr;
+    std::string_view mData;
 };
-
-#endif
