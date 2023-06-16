@@ -1,7 +1,7 @@
 #pragma once
 
-#include <string>
 #include <memory>
+#include <string>
 
 class POParser {
   public:
@@ -9,7 +9,7 @@ class POParser {
     ~POParser();
 
     POParser(const POParser &) = delete;
-    POParser(POParser&&) noexcept;
+    POParser(POParser &&) noexcept;
 
     void parse(const std::string &poPath);
     void compile(const std::string &moPath);

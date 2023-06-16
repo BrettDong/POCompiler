@@ -1,6 +1,7 @@
 #include "POParser.hpp"
 #include "FileView.hpp"
 #include "LineView.hpp"
+#include "MOWriter.hpp"
 
 #include <btree/map.h>
 
@@ -271,7 +272,9 @@ class POParser::Impl {
         commitCurrentEntry();
     }
 
-    void compile(const std::string &moPath) {}
+    void compile(const std::string &moPath) {
+        writeMO(mEntries, moPath.c_str());
+    }
 };
 
 POParser::POParser() {

@@ -7,3 +7,4 @@ AllowShortFunctionsOnASingleLine: Empty
 AlwaysBreakTemplateDeclarations: Yes
 BreakStringLiterals: False
 IndentCaseLabels: true
+IndentRequiresClause: false
