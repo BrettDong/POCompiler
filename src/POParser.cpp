@@ -1,9 +1,6 @@
 #include "POParser.hpp"
 #include "FileView.hpp"
 #include "LineView.hpp"
-#include "MOWriter.hpp"
-
-#include <btree/map.h>
 
 #include <map>
 #include <vector>
@@ -11,12 +8,12 @@
 using namespace std::string_literals;
 using namespace std::string_view_literals;
 
-class POParser::Impl {
+class POParser {
   private:
+    POCatalog &mCatalog;
     std::string mCurrentKey, mCurrentVal;
     std::string *mCurrentBuf = &mCurrentKey;
     int mCurrentPluralsCount = 0;
-    btree::map<std::string, std::string> mEntries;
 
     enum class ParserState : std::size_t {
         Comment = 0,
@@ -217,36 +214,38 @@ class POParser::Impl {
         return false;
     }
 
-    using ParseLineFn = bool (POParser::Impl::*)(std::string_view);
+    using ParseLineFn = bool (POParser::*)(std::string_view);
 
     /* clang-format off */
     static inline const std::map<ParserState, std::vector<ParseLineFn>> ParseLineFunctionsMap{
-        {ParserState::Comment, {&POParser::Impl::tryParseComment, &POParser::Impl::tryParseMsgId, &POParser::Impl::tryParseMsgCtxt}},
-        {ParserState::MsgCtxt, {&POParser::Impl::tryParseMsgId, &POParser::Impl::tryParseStandaloneStr}},
-        {ParserState::MsgId, {&POParser::Impl::tryParseMsgStr, &POParser::Impl::tryParseMsgIdPlural, &POParser::Impl::tryParseStandaloneStr}},
-        {ParserState::MsgIdPlural, {&POParser::Impl::tryParseMsgStrPlural0, &POParser::Impl::tryParseStandaloneStr}},
-        {ParserState::MsgStr, {&POParser::Impl::tryParseStandaloneStr}},
-        {ParserState::MsgStrPlural0, {&POParser::Impl::tryParseMsgStrPlural1, &POParser::Impl::tryParseStandaloneStr}},
-        {ParserState::MsgStrPlural1, {&POParser::Impl::tryParseMsgStrPlural2, &POParser::Impl::tryParseStandaloneStr}},
-        {ParserState::MsgStrPlural2, {&POParser::Impl::tryParseMsgStrPlural3, &POParser::Impl::tryParseStandaloneStr}},
-        {ParserState::MsgStrPlural3, {&POParser::Impl::tryParseMsgStrPlural4, &POParser::Impl::tryParseStandaloneStr}},
-        {ParserState::MsgStrPlural4, {&POParser::Impl::tryParseMsgStrPlural5, &POParser::Impl::tryParseStandaloneStr}},
-        {ParserState::MsgStrPlural5, {&POParser::Impl::tryParseStandaloneStr}},
-        {ParserState::StandaloneStr, {&POParser::Impl::tryParseMsgId, &POParser::Impl::tryParseMsgIdPlural, &POParser::Impl::tryParseMsgStr, &POParser::Impl::tryParseMsgStrPlural0, &POParser::Impl::tryParseMsgStrPlural1, &POParser::Impl::tryParseMsgStrPlural2, &POParser::Impl::tryParseMsgStrPlural3, &POParser::Impl::tryParseMsgStrPlural4, &POParser::Impl::tryParseMsgStrPlural5, &POParser::Impl::tryParseStandaloneStr}}
+        {ParserState::Comment, {&POParser::tryParseComment, &POParser::tryParseMsgId, &POParser::tryParseMsgCtxt}},
+        {ParserState::MsgCtxt, {&POParser::tryParseMsgId, &POParser::tryParseStandaloneStr}},
+        {ParserState::MsgId, {&POParser::tryParseMsgStr, &POParser::tryParseMsgIdPlural, &POParser::tryParseStandaloneStr}},
+        {ParserState::MsgIdPlural, {&POParser::tryParseMsgStrPlural0, &POParser::tryParseStandaloneStr}},
+        {ParserState::MsgStr, {&POParser::tryParseStandaloneStr}},
+        {ParserState::MsgStrPlural0, {&POParser::tryParseMsgStrPlural1, &POParser::tryParseStandaloneStr}},
+        {ParserState::MsgStrPlural1, {&POParser::tryParseMsgStrPlural2, &POParser::tryParseStandaloneStr}},
+        {ParserState::MsgStrPlural2, {&POParser::tryParseMsgStrPlural3, &POParser::tryParseStandaloneStr}},
+        {ParserState::MsgStrPlural3, {&POParser::tryParseMsgStrPlural4, &POParser::tryParseStandaloneStr}},
+        {ParserState::MsgStrPlural4, {&POParser::tryParseMsgStrPlural5, &POParser::tryParseStandaloneStr}},
+        {ParserState::MsgStrPlural5, {&POParser::tryParseStandaloneStr}},
+        {ParserState::StandaloneStr, {&POParser::tryParseMsgId, &POParser::tryParseMsgIdPlural, &POParser::tryParseMsgStr, &POParser::tryParseMsgStrPlural0, &POParser::tryParseMsgStrPlural1, &POParser::tryParseMsgStrPlural2, &POParser::tryParseMsgStrPlural3, &POParser::tryParseMsgStrPlural4, &POParser::tryParseMsgStrPlural5, &POParser::tryParseStandaloneStr}}
     };
     /* clang-format on */
 
     void commitCurrentEntry() {
         if (!mCurrentVal.empty() && (mCurrentVal.length() + 1 > mCurrentPluralsCount)) {
-            mEntries.insert({std::move(mCurrentKey), std::move(mCurrentVal)});
+            mCatalog.addTranslatedMessage(std::move(mCurrentKey), std::move(mCurrentVal));
         }
-        mCurrentKey = std::string{};
-        mCurrentVal = std::string{};
+        mCurrentKey.clear();
+        mCurrentVal.clear();
         mCurrentPluralsCount = 0;
         mState = ParserState::Comment;
     }
 
   public:
+    explicit POParser(POCatalog &catalog) : mCatalog(catalog) {}
+
     void parse(const std::string &poPath) {
         auto fileView = FileView{poPath};
         auto lineView = LineView{fileView.view()};
@@ -271,24 +270,11 @@ class POParser::Impl {
         }
         commitCurrentEntry();
     }
-
-    void compile(const std::string &moPath) {
-        writeMO(mEntries, moPath.c_str());
-    }
 };
 
-POParser::POParser() {
-    mImpl = std::make_unique<Impl>();
-}
-
-POParser::POParser(POParser &&) noexcept = default;
-
-POParser::~POParser() = default;
-
-void POParser::parse(const std::string &poPath) {
-    mImpl->parse(poPath);
-}
-
-void POParser::compile(const std::string &moPath) {
-    mImpl->compile(moPath);
+POCatalog parsePOFile(const std::string &path) {
+    POCatalog catalog;
+    POParser parser{catalog};
+    parser.parse(path);
+    return catalog;
 }

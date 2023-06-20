@@ -22,8 +22,7 @@ int main(int argc, char **argv) {
         std::cout << "Usage: POCompiler -o out.mo input.po" << std::endl;
         return 0;
     }
-    POParser parser;
-    parser.parse(input_path);
-    parser.compile(output_path);
+    auto catalog = parsePOFile(input_path);
+    catalog.compileToMO(output_path);
     return 0;
 }

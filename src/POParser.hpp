@@ -1,20 +1,5 @@
 #pragma once
 
-#include <memory>
-#include <string>
+#include "POCatalog.hpp"
 
-class POParser {
-  public:
-    POParser();
-    ~POParser();
-
-    POParser(const POParser &) = delete;
-    POParser(POParser &&) noexcept;
-
-    void parse(const std::string &poPath);
-    void compile(const std::string &moPath);
-
-  private:
-    class Impl;
-    std::unique_ptr<Impl> mImpl;
-};
+POCatalog parsePOFile(const std::string &path);
